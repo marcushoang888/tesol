@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giving Directions - 5th Grade</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap');
+
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --bg: #F7FFF7;
+            --text: #2D3142;
+        }
+
+        * { box-sizing: border-box; font-family: 'Nunito', 'Comic Sans MS', sans-serif; }
+
+        body { margin: 0; background-color: var(--bg); color: var(--text); text-align: center; }
+
+        nav {
+            background-color: var(--primary); padding: 15px;
+            display: flex; justify-content: center; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky; z-index: 100;
+        }
+
+        nav button {
+            background-color: white; color: var(--primary); border: 3px solid white;
+            padding: 10px 20px; border-radius: 25px; font-size: 16px; font-weight: 800;
+            cursor: pointer; transition: 0.3s;
+        }
+
+        nav button:hover, nav button.active {
+            background-color: var(--accent); color: var(--text); border-color: var(--text);
+        }
+
+        section { display: none; padding: 0px 20px; max-width: 800px; margin: 0 auto; }
+        section.active { display: block; animation: fadeIn 0.5s; }
+
+        /* Cấu hình đặc biệt cho trang Home để chiếm full chiều rộng màn hình */
+        #home { max-width: 100% !important; width: 100%; padding: 0; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { color: var(--primary); font-size: 2.5em; }
+        h2 { color: var(--primary);  font-size: 2.5em; }
+
+        /* Sửa Banner lấy ảnh ./home.jpg, full width và height 65% màn hình */
+        .banner {
+            background-image: url('./home.jpg');
+            background-size: cover;
+            background-position: center;
+            width: 100%;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+        }
+        .banner h1 { color: white; font-size: 3.5em; margin: 0; }
+
+        .card {
+            background: white; ; border-radius: 20px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.432); margin-bottom: 20px; position: relative;
+            padding: 20px 30px;
+        }
+
+        .visual { font-size: 60px; margin: 20px 0; }
+        
+        /* CSS cho hình ảnh media trong bài học và bài tập */
+        .lesson-media-img { max-width: 500px; border-radius: 15px; }
+        .prac-media-img { max-width: 300px;  border-radius: 15px; }
+        .option-img { max-width: 120px; max-height: 90px; border-radius: 8px; display: block; margin: 0 auto; }
+
+        /* Giao diện thanh điều hướng dạng icon nằm 2 bên mục Lesson */
+        .lesson-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 50px;
+
+        }
+        .lesson-nav-btn,
+        .practice-nav-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            width: 70px;
+            height: 70px;
+            transition: all 0.2s ease;
+        }
+        .lesson-nav-btn img,
+        .practice-nav-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .lesson-nav-btn:hover:not(:disabled),
+        .practice-nav-btn:hover:not(:disabled) {
+            transform: scale(1.08);
+        }
+        .lesson-nav-btn:disabled,
+        .practice-nav-btn:disabled {
+            opacity: 0.3;
+            filter: grayscale(100%);
+            cursor: not-allowed;
+        }
+        .practice-container {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:15px;
+        }
+        .practice-card {
+            flex-grow:1;
+            margin:0;
+        }
+        .lesson-card { flex-grow: 1; margin: 0; }
+
+        .btn-audio {
+            background-color: var(--accent); border: none; padding: 10px 20px;
+            border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 0px #e5cf5e;
+            margin-bottom: 16px;
+        }
+        .btn-audio:active { transform: translateY(4px); box-shadow: none; }
+
+        .controls { margin-top: 20px; }
+        .controls button, .btn-option {
+            background-color: var(--secondary); color: white; border: none;
+            padding: 12px 25px; margin: 5px; border-radius: 15px; font-size: 18px;
+            font-weight: bold; cursor: pointer; box-shadow: 0 5px 0px #3eb3ab; transition: all 0.2s;
+        }
+        .controls button:active, .btn-option:active { transform: translateY(3px); box-shadow: 0 2px 0px #3eb3ab; }
+        .controls button:disabled { background-color: #ccc; box-shadow: 0 5px 0px #aaa; cursor: not-allowed; }
+
+        /* Hiệu ứng HOVER nhích lên kèm bóng đổ dạ quang màu vàng chanh cho các đáp án */
+        .btn-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px #CCFF00, 0 5px 0px #3eb3ab;
+        }
+
+        /* Animation chớp xanh/đỏ cho nút bấm */
+        @keyframes flashRed {
+            0%, 100% { background-color: var(--secondary); }
+            25%, 75% { background-color: #FF4757; }
+            50% { background-color: #FF4757; }
+        }
+        .flash-red { animation: flashRed 0.5s ease; }
+        .flash-green { background-color: #2ED573 !important; box-shadow: 0 5px 0px #22a659 !important; }
+
+        .options-grid { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
+        .feedback { font-size: 20px; font-weight: bold; margin-top: 15px; height: 30px;}
+
+        /* Map */
+        #game-container {
+            width: 100%; height: 500px; background-color: #A8E6CF;
+            border: 5px solid var(--text); border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 20px;
+        }
+
+        .road { position: absolute; background-color: #555; }
+        .road-line { position: absolute; border: 2px dashed white; }
+        
+        .h-road-1 { width: 100%; height: 80px; top: 100px; left: 0; }
+        .h-road-2 { width: 100%; height: 80px; top: 320px; left: 0; }
+        .v-road-1 { width: 80px; height: 100%; top: 0; left: 150px; }
+        .v-road-2 { width: 80px; height: 100%; top: 0; left: 450px; }
+        
+        .hl { width: 100%; top: 38px; left: 0; }
+        .vl { height: 100%; left: 38px; top: 0; }
+
+        .destination {
+            position: absolute; font-size: 40px; background: white;
+            border-radius: 50%; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 5;
+        }
+        #dest-school { top: 20px; left: 240px; }
+        #dest-park { top: 200px; left: 50px; }
+        #dest-hospital { top: 410px; left: 550px; }
+        #dest-zoo { top: 200px; left: 550px; }
+
+        #player {
+            position: absolute; font-size: 45px; top: 110px; left: 50px;
+            transition: all 0.5s ease-in-out; z-index: 10;
+        }
+
+        .game-controls { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .game-controls button { 
+            background-color: var(--primary); width: 140px; height: 60px; font-size: 18px; 
+            margin: 0; display: flex; align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm-practice" src="practice.mp3" loop></audio>
+    <audio id="bgm-game" src="game.mp3" loop></audio>
+    
+    <audio id="sfx-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="sfx-wrong" src="wrong.mp3"></audio>
+    <audio id="sfx-move" src="carmovement.mp3"></audio>
+
+    <nav>
+        <button class="nav-btn active" onclick="showTab('home')">🏠 Home</button>
+        <button class="nav-btn" onclick="showTab('warmup')">🎬 Warm Up</button>
+        <button class="nav-btn" onclick="showTab('lesson')">📚 Lesson</button>
+        <button class="nav-btn" onclick="showTab('practice')">✍️ Practice</button>
+        <button class="nav-btn" onclick="showTab('game')">🎮 Game</button>
+    </nav>
+
+    <section id="home" class="active">
+        <div class="banner">
+            <div style="background-color: rgba(0, 0, 0, 0.521); padding: 20px; border-radius: 20px;">
+                      <h1>Giving Directions 🗺️</h1>
+                        <p style="font-size: 1.5em; margin-top: 10px;">English for 5th Graders - Let's explore the city!</p>
+            </div>
+          
+        </div>
+    </section>
+
+    <section id="warmup">
+        <h2>Warm Up Time!</h2>
+        <div class="card" style="height: 65vh; padding: 0; overflow: hidden; border-radius: 20px;">
+            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/-8vs0k0mNN4" title="Warm Up - Give Direction" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </section>
+
+    <section id="lesson">
+        <h2>Let's Learn New Words!</h2>
+        <div class="lesson-container">
+            <button id="btn-less-prev" class="lesson-nav-btn" onclick="changeLesson(-1)"><img src="prev.svg" alt="Previous"></button>
+            
+            <div class="card lesson-card">
+                <div id="lesson-content"></div>
+            </div>
+            
+            <button id="btn-less-next" class="lesson-nav-btn" onclick="changeLesson(1)"><img src="next.svg" alt="Next"></button>
+        </div>
+    </section>
+
+    <section id="practice">
+        <h2>Practice Makes Perfect!</h2>
+        <div class="practice-container">
+        <button id="btn-prac-prev" class="practice-nav-btn" onclick="changePractice(-1)">
+            <img src="prev.svg" alt="Previous">
+        </button>
+        <div class="card practice-card">
+            <h3 id="prac-q"></h3>
+            <div id="prac-visual" class="visual"></div>
+            <button id="prac-audio" class="btn-audio" style="display:none;" onclick="playAudio(currentPracAudio)">🔊</button>
+            
+            <div id="prac-options" class="options-grid"></div>
+            <div id="prac-feedback" class="feedback"></div>
+
+        </div>
+        <button id="btn-prac-next" class="practice-nav-btn" onclick="changePractice(1)" disabled>
+            <img src="next.svg" alt="Next">
+        </button>
+        </div>
+    </section>
+
+    <section id="game">
+        <h2>The Navigator Game 🚕</h2>
+        <p>Listen to the teacher and click the buttons to drive the car!</p>
+        
+        <div id="game-container">
+            <div class="road h-road-1"><div class="road-line hl"></div></div>
+            <div class="road h-road-2"><div class="road-line hl"></div></div>
+            <div class="road v-road-1"><div class="road-line vl"></div></div>
+            <div class="road v-road-2"><div class="road-line vl"></div></div>
+            
+            <div id="dest-school" class="destination" title="School">🏫</div>
+            <div id="dest-park" class="destination" title="Park">🌳</div>
+            <div id="dest-hospital" class="destination" title="Hospital">🏥</div>
+            <div id="dest-zoo" class="destination" title="Zoo">🦁</div>
+
+            <div id="player" style="transform: rotate(0deg);">
+                <div style="transform: scaleX(-1); display: inline-block;">🚕</div>
+            </div>
+        </div>
+
+        <div class="game-controls controls">
+            <button onclick="movePlayer('left')">Turn Left</button>
+            <button onclick="movePlayer('straight')">Go Straight</button>
+            <button onclick="movePlayer('right')">Turn Right</button>
+        </div>
+    </section>
+
+    <script>
+        // Thiết lập âm thanh nền
+        const bgmPractice = document.getElementById('bgm-practice');
+        const bgmGame = document.getElementById('bgm-game');
+        
+        // Cấu hình âm lượng và tốc độ theo yêu cầu
+        bgmPractice.volume = 0.7;      // Giảm âm lượng còn 70%
+        bgmPractice.playbackRate = 1.25; // Tăng tốc độ lên 1.25
+        bgmGame.volume = 0.7;          // Giảm âm lượng còn 70%
+
+        function showTab(tabId) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            // Xử lý kích hoạt màu nút trên thanh Nav chính xác khi đổi tab
+            const activeNavBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.innerText.toLowerCase().includes(tabId));
+            if(activeNavBtn) activeNavBtn.classList.add('active');
+
+            bgmPractice.pause();
+            bgmGame.pause();
+
+            if (tabId === 'practice') {
+                bgmPractice.play().catch(e => console.log("Hệ thống đợi tương tác trước khi phát nhạc."));
+            } else if (tabId === 'game') {
+                bgmGame.play().catch(e => console.log("Hệ thống đợi tương tác trước khi phát nhạc."));
+            }
+        }
+
+        // --- CÀI ĐẶT TTS GIỌNG NỮ VUI TƯƠI ---
+        let preferredVoice = null;
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            preferredVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Google UK English Female'))) 
+                             || voices.find(v => v.lang.includes('en'));
+        }
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+
+        function playAudio(text) {
+            window.speechSynthesis.cancel(); // Ngắt âm thanh cũ đang nói (nếu có) để tránh đè chữ
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (preferredVoice) utterance.voice = preferredVoice;
+            utterance.lang = 'en-US';
+            utterance.rate = 1.0; 
+            utterance.pitch = 1.4; 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- LESSON DATA (Tích hợp thêm các file ảnh tĩnh và gif tương ứng) ---
+        const lessons = [
+            { type: 'vocab', word: 'Turn Left', img: '⬅️', file: 'left.gif' },
+            { type: 'vocab', word: 'Turn Right', img: '➡️', file: 'right.gif' },
+            { type: 'vocab', word: 'Go Straight', img: '⬆️', file: 'straight.gif' },
+            { type: 'vocab', word: 'Roundabout', img: '🔄', file: 'roundabout.png' },
+            { type: 'structure', word: 'How can I get from [A] to [B]?', img: '🏠 ❓ 🏫', example: 'How can I get from home to school?', file: '' }
+        ];
+        let currentLesson = 0;
+
+        function renderLesson() {
+            const content = document.getElementById('lesson-content');
+            const data = lessons[currentLesson];
+            
+            let mediaHtml = '';
+            // Render file gif/png lên phía trên icon nếu có cấu hình file dữ liệu
+            if (data.file) {
+                mediaHtml = `<img src="${data.file}" class="lesson-media-img"><br>`;
+            }
+            
+            let html = `<div class="visual">${mediaHtml}${data.img}</div>
+                        <h1>${data.word}</h1>
+                        <button class="btn-audio" onclick="playAudio('${data.word}')">🔊</button>`;
+            
+            if (data.type === 'structure') {
+                html += `<div style="margin-top:20px; padding:15px; background: #FFF9C4; border-radius: 10px;">
+                            <p style="color: #FF5722; font-weight: bold;">Example:</p><h2>${data.example}</h2>
+                            <button class="btn-audio" onclick="playAudio('${data.example}')">🔊</button>
+                         </div>`;
+            }
+            content.innerHTML = html;
+
+            // Xử lý vô hiệu hóa các nút icon điều hướng 2 bên mục Lesson
+            document.getElementById('btn-less-prev').disabled = (currentLesson === 0);
+            document.getElementById('btn-less-next').disabled = (currentLesson === lessons.length - 1);
+        }
+
+        function changeLesson(dir) {
+            currentLesson = Math.max(0, Math.min(currentLesson + dir, lessons.length - 1));
+            renderLesson();
+        }
+
+        // --- PRACTICE DATA (Cấu hình hình ảnh chi tiết thay thế cho icon, đổi tùy chọn đáp án thành ảnh) ---
+        const practices = [
+            { q: "1. Choose the correct word for the picture:", visual: "roundabout.png", isImg: true, type: "img-to-text", options: ["Turn right", "Roundabout", "Go straight"], ans: 1 },
+            { q: "2. Choose the correct word for the picture:", visual: "right.avif", isImg: true, type: "img-to-text", options: ["Turn left", "Go straight", "Turn right"], ans: 2 },
+            { q: "3. Listen and choose the correct word:", visual: "", type: "audio-to-text", audioText: "Turn left", autoplay: true, options: ["Turn left", "Roundabout", "Go straight"], ans: 0 },
+            { q: "4. Listen and choose the correct picture:", visual: "", type: "audio-to-img", audioText: "Go straight", options: ["left.avif", "straight.png", "roundabout.png"], isOptImg: true, ans: 1 },
+            { q: "5. Fill in the blanks: How ___ I get ___ home to school?", visual: "question5.png", isImg: true, type: "text", options: ["do / from", "can / from", "can / to"], ans: 1 }
+        ];
+
+        let currentPrac = 0, unlockedPrac = 0, currentPracAudio = "";
+        const sfxCorrect = document.getElementById('sfx-correct');
+        const sfxWrong = document.getElementById('sfx-wrong');
+
+        function renderPractice() {
+            const data = practices[currentPrac];
+            document.getElementById('prac-q').innerText = data.q;
+            
+            const visualDiv = document.getElementById('prac-visual');
+            // Kiểm tra hiển thị ảnh thay thế icon cho Câu 1, 2, 5
+            if (data.isImg) {
+                visualDiv.innerHTML = `<img src="${data.visual}" class="prac-media-img">`;
+            } else if (currentPrac === 2) {
+                // Câu 3: Xoá icon tai nghe hoàn toàn
+                visualDiv.innerHTML = ""; 
+            } else {
+                visualDiv.innerHTML = data.visual;
+            }
+            
+            document.getElementById('prac-feedback').innerText = "";
+            
+            const btnAudio = document.getElementById('prac-audio');
+            if (data.type.includes('audio')) {
+                btnAudio.style.display = 'inline-block';
+                currentPracAudio = data.audioText;
+                
+                // Phóng to kích thước nút loa âm thanh ở Câu 3
+                if (currentPrac === 2) {
+                    btnAudio.style.transform = "scale(1.8)";
+                    btnAudio.style.margin = "25px";
+                } else {
+                    btnAudio.style.transform = "scale(1)";
+                    btnAudio.style.margin = "0";
+                }
+            } else {
+                btnAudio.style.display = 'none';
+            }
+
+            const optsDiv = document.getElementById('prac-options');
+            optsDiv.innerHTML = "";
+            data.options.forEach((opt, index) => {
+                // Câu 4: Hiển thị các đáp án lựa chọn bằng hình ảnh thay vì icon text
+                if (data.isOptImg) {
+                    optsDiv.innerHTML += `<button class="btn-option" onclick="checkAnswer(${index}, ${data.ans}, this)"><img src="${opt}" class="option-img"></button>`;
+                } else {
+                    optsDiv.innerHTML += `<button class="btn-option" onclick="checkAnswer(${index}, ${data.ans}, this)">${opt}</button>`;
+                }
+            });
+
+            document.getElementById('btn-prac-prev').disabled = (currentPrac === 0);
+            document.getElementById('btn-prac-next').disabled = (currentPrac >= unlockedPrac);
+            document.getElementById('btn-prac-next').style.visibility = (currentPrac === practices.length - 1) ? 'hidden' : 'visible';
+
+            // Kích hoạt tính năng Tự động phát âm thanh (Auto-play) riêng cho câu 3
+            if (data.autoplay) {
+                setTimeout(() => { playAudio(data.audioText); }, 400);
+            }
+        }
+
+        function checkAnswer(selected, correct, btnElement) {
+            document.querySelectorAll('.btn-option').forEach(btn => {
+                btn.classList.remove('flash-red', 'flash-green');
+            });
+
+            if (selected === correct) {
+                sfxCorrect.currentTime = 0; sfxCorrect.play();
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                btnElement.classList.add('flash-green');
+                
+                if (currentPrac === unlockedPrac) unlockedPrac++;
+                if (currentPrac < practices.length - 1) document.getElementById('btn-prac-next').disabled = false;
+            } else {
+                // Chạy hiệu ứng âm thanh sai thông qua file cấu hình wrong.mp3 mới
+                sfxWrong.currentTime = 0; sfxWrong.play();
+                btnElement.classList.add('flash-red');
+                setTimeout(() => {
+                    btnElement.classList.remove('flash-red');
+                }, 500);
+            }
+        }
+
+        function changePractice(dir) {
+            if (dir === 1 && currentPrac < unlockedPrac && currentPrac < practices.length - 1) currentPrac++;
+            else if (dir === -1 && currentPrac > 0) currentPrac--;
+            renderPractice();
+        }
+
+        // --- GAME LOGIC ---
+        let playerX = 30; 
+        let playerY = 110;
+        let rotation = 0; 
+        const step = 100; 
+        const sfxMove = document.getElementById('sfx-move');
+
+        function updatePlayer() {
+            const player = document.getElementById('player');
+            player.style.left = playerX + 'px';
+            player.style.top = playerY + 'px';
+            player.style.transform = `rotate(${rotation}deg)`;
+        }
+
+        function moveForward(dist) {
+            const currentDir = ((rotation % 360) + 360) % 360; 
+            if (currentDir === 0) playerX += dist;        // East
+            else if (currentDir === 90) playerY += dist;  // South
+            else if (currentDir === 180) playerX -= dist; // West
+            else if (currentDir === 270) playerY -= dist; // North
+        }
+
+        function movePlayer(action) {
+            // Phát sound carmovement.mp3 mỗi khi người dùng click lệnh điều khiển xe di chuyển
+            sfxMove.currentTime = 0;
+            sfxMove.play().catch(e => console.log("Hệ thống âm thanh đang nạp dữ liệu."));
+
+            if (action === 'right') {
+                rotation += 90;
+                moveForward(step / 2); 
+            }
+            else if (action === 'left') {
+                rotation -= 90;
+                moveForward(step / 2); 
+            }
+            else if (action === 'straight') {
+                moveForward(step); 
+            }
+            updatePlayer();
+        }
+
+        // Khởi chạy hệ thống dữ liệu ban đầu
+        loadVoices();
+        renderLesson();
+        renderPractice();
+    </script>
+</body>
+</html>
